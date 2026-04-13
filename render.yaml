@@ -1,11 +1,17 @@
 services:
   - type: web
     name: dowon
-    env: python
+    runtime: python
     region: singapore
     plan: free
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120
     envVars:
       - key: KSTARTUP_API_KEY
         value: 39af9bc6585e1db2baec17245fe6d556486148d45fe88aa213e10043604d343b
+      - key: ACCESS_PASSWORD
+        value: "157600"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.12.4

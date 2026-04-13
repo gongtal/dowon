@@ -5,10 +5,21 @@ import re
 import time
 import threading
 from datetime import datetime, date
-from flask import Flask, jsonify, render_template, request
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+)
 import requests
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.secret_key = os.environ.get("SECRET_KEY", "dowon-桃園結義-2026-secret-key")
+
+ACCESS_PASSWORD = os.environ.get("ACCESS_PASSWORD", "157600")
 
 KSTARTUP_API_KEY = os.environ.get(
     "KSTARTUP_API_KEY",
@@ -229,6 +240,37 @@ def refresh_cache():
 def ensure_cache():
     if not cache["grants"] or (time.time() - cache["updated"] > CACHE_TTL):
         refresh_cache()
+
+
+@app.before_request
+def require_password():
+    if request.path.startswith("/static/") or request.path in ("/login", "/logout"):
+        return None
+    if not session.get("authed"):
+        return redirect(url_for("login", next=request.path))
+    return None
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    error = None
+    if request.method == "POST":
+        pw = (request.form.get("password") or "").strip()
+        if pw == ACCESS_PASSWORD:
+            session.permanent = True
+            session["authed"] = True
+            nxt = request.args.get("next") or "/"
+            if not nxt.startswith("/"):
+                nxt = "/"
+            return redirect(nxt)
+        error = "비밀번호가 올바르지 않습니다."
+    return render_template("login.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 
 @app.route("/")
