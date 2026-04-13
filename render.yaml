@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: doowon-grants
+    runtime: docker
+    plan: free
+    region: singapore
+    envVars:
+      - key: KSTARTUP_API_KEY
+        value: 39af9bc6585e1db2baec17245fe6d556486148d45fe88aa213e10043604d343b
+      - key: PYTHONUNBUFFERED
+        value: "1"
