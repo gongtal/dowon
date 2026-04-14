@@ -1,0 +1,55 @@
+{% extends "auth_base.html" %}
+{% block title %}회원가입 · 도원결의{% endblock %}
+{% block body %}
+<form class="card" method="POST" autocomplete="on">
+  <div class="brand">
+    <div class="brand-mark">桃</div>
+    <div>
+      <div class="brand-name">도원결의</div>
+      <div class="brand-sub">DOWON · 桃園結義</div>
+    </div>
+  </div>
+
+  <div class="kicker">회원가입 신청</div>
+  <h1>함께할 의형제를 모십니다</h1>
+  <p class="desc">가입 신청 후 관리자 승인이 완료되면 정부지원사업 공고를 열람하실 수 있습니다.</p>
+
+  <div class="row2">
+    <div>
+      <label for="name">이름</label>
+      <input id="name" name="name" type="text" required value="{{ form.name }}" placeholder="홍길동" />
+    </div>
+    <div>
+      <label for="company">소속/회사 <span style="color:var(--ink-300);font-weight:400">(선택)</span></label>
+      <input id="company" name="company" type="text" value="{{ form.company }}" placeholder="(주)예시" />
+    </div>
+  </div>
+
+  <label for="email">이메일</label>
+  <input id="email" name="email" type="email" autocomplete="email" required value="{{ form.email }}" placeholder="you@example.com" />
+
+  <div class="row2">
+    <div>
+      <label for="pw">비밀번호</label>
+      <input id="pw" name="password" type="password" autocomplete="new-password" required minlength="6" placeholder="6자 이상" />
+    </div>
+    <div>
+      <label for="pw2">비밀번호 확인</label>
+      <input id="pw2" name="password2" type="password" autocomplete="new-password" required minlength="6" placeholder="한 번 더 입력" />
+    </div>
+  </div>
+
+  <label for="reason">가입 목적 <span style="color:var(--ink-300);font-weight:400">(선택, 심사에 참고됩니다)</span></label>
+  <textarea id="reason" name="reason" placeholder="예: 스타트업 대표로서 정부지원사업 모니터링이 필요합니다.">{{ form.reason }}</textarea>
+
+  <button type="submit">가입 신청하기</button>
+
+  {% if error %}
+    <div class="error">⚠️ {{ error }}</div>
+  {% endif %}
+
+  <div class="hint">
+    이미 계정이 있으신가요? <a href="{{ url_for('login') }}">로그인</a>
+  </div>
+</form>
+{% endblock %}

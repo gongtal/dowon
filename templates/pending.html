@@ -1,0 +1,43 @@
+{% extends "auth_base.html" %}
+{% block title %}승인 대기 중 · 도원결의{% endblock %}
+{% block body %}
+<div class="card">
+  <div class="brand">
+    <div class="brand-mark">桃</div>
+    <div>
+      <div class="brand-name">도원결의</div>
+      <div class="brand-sub">DOWON · 桃園結義</div>
+    </div>
+  </div>
+
+  {% if user.status == 'pending' %}
+    <div class="kicker" style="background:var(--amber-100);color:#92400E">승인 대기</div>
+    <h1>가입 신청이 접수되었습니다</h1>
+    <p class="desc">관리자가 내용을 검토한 후 승인해드립니다. 승인이 완료되면 동일한 계정으로 로그인 시 자동으로 접속됩니다.</p>
+    <div class="status-box pending">
+      <div class="title">⏳ 관리자 검토 중</div>
+      <div class="msg">승인 완료 시 별도 알림은 전송되지 않습니다. 잠시 후 다시 로그인해보시거나, 문의는 관리자에게 직접 연락해주세요.</div>
+    </div>
+  {% elif user.status == 'rejected' %}
+    <div class="kicker" style="background:var(--red-100);color:var(--red)">가입 거절</div>
+    <h1>가입이 거절되었습니다</h1>
+    <p class="desc">이용 정책에 부합하지 않아 가입이 거절되었습니다. 자세한 사유는 관리자에게 문의해주세요.</p>
+    <div class="status-box rejected">
+      <div class="title">❌ 접근 불가</div>
+      <div class="msg">서비스 이용이 불가한 계정입니다.</div>
+    </div>
+  {% endif %}
+
+  <div style="padding:18px;background:var(--ink-100);border-radius:12px;margin-top:8px">
+    <div style="font-size:12px;font-weight:700;color:var(--ink-500);margin-bottom:10px;letter-spacing:.05em">내 신청 정보</div>
+    <div class="profile-row"><span class="label">이름</span><span class="val">{{ user.name }}</span></div>
+    <div class="profile-row"><span class="label">이메일</span><span class="val">{{ user.email }}</span></div>
+    {% if user.company %}<div class="profile-row"><span class="label">소속</span><span class="val">{{ user.company }}</span></div>{% endif %}
+    <div class="profile-row"><span class="label">신청일</span><span class="val">{{ user.created_at[:10] }}</span></div>
+  </div>
+
+  <div class="hint" style="margin-top:20px">
+    <a href="{{ url_for('logout') }}">로그아웃</a>
+  </div>
+</div>
+{% endblock %}

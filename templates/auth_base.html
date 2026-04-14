@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{% block title %}도원결의{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Pretendard:wght@400;500;600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --ink-900:#0F172A;--ink-700:#334155;--ink-500:#64748B;--ink-300:#CBD5E1;--ink-100:#F1F5F9;
+    --border:#E2E8F0;--primary:#1E40AF;--primary-600:#2563EB;--primary-100:#DBEAFE;
+    --plum:#9F1239;--plum-100:#FCE7F3;--emerald:#059669;--emerald-100:#D1FAE5;
+    --amber:#D97706;--amber-100:#FEF3C7;--red:#DC2626;--red-100:#FEE2E2;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;
+    background:
+      radial-gradient(ellipse at top right, rgba(159,18,57,.12), transparent 55%),
+      radial-gradient(ellipse at bottom left, rgba(30,64,175,.10), transparent 55%),
+      linear-gradient(180deg,#FFFFFF 0%, #F8FAFC 100%);
+    color:var(--ink-900);min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:24px;position:relative;overflow-x:hidden;
+  }
+  body::before{
+    content:'';position:absolute;inset:0;
+    background-image:
+      linear-gradient(var(--border) 1px,transparent 1px),
+      linear-gradient(90deg,var(--border) 1px,transparent 1px);
+    background-size:48px 48px;opacity:.35;
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 40%, #000 25%, transparent 75%);
+    -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%, #000 25%, transparent 75%);
+    pointer-events:none;
+  }
+  .card{
+    position:relative;z-index:1;background:#fff;
+    border:1px solid var(--border);border-radius:24px;
+    padding:44px 40px;width:100%;max-width:460px;
+    box-shadow:0 20px 50px -12px rgba(15,23,42,.12), 0 8px 16px -8px rgba(15,23,42,.08);
+  }
+  .brand{display:flex;align-items:center;gap:14px;margin-bottom:28px}
+  .brand-mark{
+    width:52px;height:52px;border-radius:14px;
+    background:linear-gradient(135deg,#9F1239 0%, #BE123C 50%, #E11D48 100%);
+    color:#fff;display:flex;align-items:center;justify-content:center;
+    font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;
+    box-shadow:0 8px 20px rgba(159,18,57,.35);
+  }
+  .brand-name{font-family:'Noto Serif KR',serif;font-size:22px;font-weight:700;letter-spacing:.06em;line-height:1.1}
+  .brand-sub{font-size:12px;color:var(--ink-500);margin-top:3px;letter-spacing:.05em}
+  h1{font-size:22px;font-weight:800;margin:0 0 8px;letter-spacing:-.02em}
+  .desc{font-size:14px;color:var(--ink-500);margin:0 0 24px;line-height:1.6}
+  label{font-size:13px;font-weight:600;color:var(--ink-900);display:block;margin-bottom:7px;margin-top:14px}
+  label:first-of-type{margin-top:0}
+  input[type="email"],input[type="password"],input[type="text"],textarea{
+    width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;
+    font-family:inherit;font-size:14.5px;background:#FAFBFC;outline:none;
+    transition:all .15s ease;color:var(--ink-900);
+  }
+  textarea{resize:vertical;min-height:80px;font-family:inherit}
+  input:focus,textarea:focus{border-color:var(--primary-600);background:#fff;box-shadow:0 0 0 4px var(--primary-100)}
+  button[type="submit"]{
+    width:100%;margin-top:20px;padding:13px 20px;
+    background:var(--ink-900);color:#fff;border:none;border-radius:12px;
+    font-size:15px;font-weight:700;cursor:pointer;
+    transition:background .15s ease,transform .1s;font-family:inherit;
+  }
+  button[type="submit"]:hover{background:var(--primary)}
+  button[type="submit"]:active{transform:scale(.98)}
+  .error{margin-top:14px;padding:11px 14px;background:var(--red-100);color:var(--red);
+    border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .hint{margin-top:22px;padding-top:18px;border-top:1px dashed var(--border);
+    text-align:center;color:var(--ink-500);font-size:12.5px;line-height:1.7}
+  .hint a{color:var(--primary-600);font-weight:600;text-decoration:none}
+  .hint a:hover{text-decoration:underline}
+  .kicker{display:inline-block;padding:5px 12px;border-radius:999px;
+    background:var(--plum-100);color:var(--plum);
+    font-family:'Noto Serif KR',serif;font-size:11.5px;font-weight:700;
+    letter-spacing:.08em;margin-bottom:14px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .status-box{padding:18px;border-radius:12px;margin-bottom:18px}
+  .status-box.pending{background:var(--amber-100);color:#92400E;border:1px solid #FCD34D}
+  .status-box.rejected{background:var(--red-100);color:var(--red);border:1px solid #FCA5A5}
+  .status-box .title{font-weight:700;font-size:15px;margin-bottom:4px}
+  .status-box .msg{font-size:13.5px;line-height:1.6}
+  .profile-row{display:flex;justify-content:space-between;padding:10px 0;font-size:13.5px}
+  .profile-row .label{color:var(--ink-500)}
+  .profile-row .val{font-weight:600}
+</style>
+</head>
+<body>
+  {% block body %}{% endblock %}
+</body>
+</html>

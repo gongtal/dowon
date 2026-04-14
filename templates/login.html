@@ -1,143 +1,34 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>도원결의 · 접속 인증</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Pretendard:wght@400;500;600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet" />
-<style>
-  :root {
-    --ink-900:#0F172A; --ink-500:#64748B; --ink-300:#CBD5E1; --ink-100:#F1F5F9;
-    --border:#E2E8F0; --primary:#1E40AF; --primary-600:#2563EB; --primary-100:#DBEAFE;
-    --plum:#9F1239; --red:#DC2626;
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;padding:0;height:100%}
-  body{
-    font-family:'Pretendard',-apple-system,BlinkMacSystemFont,sans-serif;
-    background:
-      radial-gradient(ellipse at top right, rgba(159,18,57,.12), transparent 55%),
-      radial-gradient(ellipse at bottom left, rgba(30,64,175,.10), transparent 55%),
-      linear-gradient(180deg,#FFFFFF 0%, #F8FAFC 100%);
-    color:var(--ink-900);
-    min-height:100vh;
-    display:flex; align-items:center; justify-content:center;
-    padding:24px; position:relative; overflow:hidden;
-  }
-  body::before{
-    content:'';position:absolute;inset:0;
-    background-image:
-      linear-gradient(var(--border) 1px,transparent 1px),
-      linear-gradient(90deg,var(--border) 1px,transparent 1px);
-    background-size:48px 48px;opacity:.35;
-    mask-image:radial-gradient(ellipse 70% 60% at 50% 40%, #000 25%, transparent 75%);
-    -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%, #000 25%, transparent 75%);
-    pointer-events:none;
-  }
-  .card{
-    position:relative;z-index:1;
-    background:#fff;
-    border:1px solid var(--border);
-    border-radius:24px;
-    padding:44px 40px;
-    width:100%;max-width:420px;
-    box-shadow:0 20px 50px -12px rgba(15,23,42,.12), 0 8px 16px -8px rgba(15,23,42,.08);
-  }
-  .brand{display:flex;align-items:center;gap:14px;margin-bottom:32px}
-  .brand-mark{
-    width:52px;height:52px;border-radius:14px;
-    background:linear-gradient(135deg,#9F1239 0%, #BE123C 50%, #E11D48 100%);
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-family:'Noto Serif KR',serif;font-size:28px;font-weight:700;
-    box-shadow:0 8px 20px rgba(159,18,57,.35);
-  }
-  .brand-name{
-    font-family:'Noto Serif KR',serif;
-    font-size:22px;font-weight:700;letter-spacing:.06em;line-height:1.1;
-  }
-  .brand-sub{font-size:12px;color:var(--ink-500);margin-top:3px;letter-spacing:.05em}
-  h1{font-size:22px;font-weight:800;margin:0 0 8px;letter-spacing:-.02em}
-  .desc{font-size:14px;color:var(--ink-500);margin:0 0 28px;line-height:1.6}
-  label{font-size:13px;font-weight:600;color:var(--ink-900);display:block;margin-bottom:8px}
-  .pw-wrap{position:relative}
-  input[type="password"],input[type="text"]{
-    width:100%;
-    padding:15px 16px;
-    border:1.5px solid var(--border);
-    border-radius:12px;
-    font-family:'Inter','Pretendard',sans-serif;
-    font-size:17px;letter-spacing:.15em;
-    background:#FAFBFC;
-    outline:none;
-    transition:all .15s ease;
-    color:var(--ink-900);
-  }
-  input:focus{
-    border-color:var(--primary-600);
-    background:#fff;
-    box-shadow:0 0 0 4px var(--primary-100);
-  }
-  button[type="submit"]{
-    width:100%;
-    margin-top:14px;
-    padding:14px 20px;
-    background:var(--ink-900);
-    color:#fff;
-    border:none;
-    border-radius:12px;
-    font-size:15px;font-weight:700;
-    cursor:pointer;
-    transition:background .15s ease, transform .1s;
-    font-family:inherit;
-  }
-  button[type="submit"]:hover{background:var(--primary)}
-  button[type="submit"]:active{transform:scale(.98)}
-  .error{
-    margin-top:14px;padding:11px 14px;
-    background:#FEE2E2;color:var(--red);
-    border-radius:10px;font-size:13px;font-weight:600;
-    display:flex;align-items:center;gap:8px;
-  }
-  .hint{
-    margin-top:24px;padding-top:20px;border-top:1px dashed var(--border);
-    text-align:center;color:var(--ink-500);font-size:12px;line-height:1.6;
-  }
-  .kicker{
-    display:inline-block;padding:5px 12px;border-radius:999px;
-    background:#FCE7F3;color:var(--plum);
-    font-family:'Noto Serif KR',serif;font-size:11.5px;font-weight:700;
-    letter-spacing:.08em;margin-bottom:14px;
-  }
-</style>
-</head>
-<body>
-  <form class="card" method="POST" autocomplete="off">
-    <div class="brand">
-      <div class="brand-mark">桃</div>
-      <div>
-        <div class="brand-name">도원결의</div>
-        <div class="brand-sub">DOWON · 桃園結義</div>
-      </div>
+{% extends "auth_base.html" %}
+{% block title %}로그인 · 도원결의{% endblock %}
+{% block body %}
+<form class="card" method="POST" autocomplete="on">
+  <div class="brand">
+    <div class="brand-mark">桃</div>
+    <div>
+      <div class="brand-name">도원결의</div>
+      <div class="brand-sub">DOWON · 桃園結義</div>
     </div>
+  </div>
 
-    <div class="kicker">접속 인증</div>
-    <h1>비밀번호를 입력해주세요</h1>
-    <p class="desc">본 서비스는 인가된 사용자만 접근할 수 있습니다. 발급받으신 접속 비밀번호를 입력하세요.</p>
+  <div class="kicker">로그인</div>
+  <h1>다시 만나 반갑습니다</h1>
+  <p class="desc">승인된 계정으로 로그인하여 정부지원사업 공고를 확인하세요.</p>
 
-    <label for="pw">비밀번호</label>
-    <div class="pw-wrap">
-      <input id="pw" name="password" type="password" inputmode="numeric" autocomplete="off" autofocus placeholder="••••••" />
-    </div>
+  <label for="email">이메일</label>
+  <input id="email" name="email" type="email" autocomplete="username" required autofocus placeholder="you@example.com" />
 
-    <button type="submit">접속하기</button>
+  <label for="pw">비밀번호</label>
+  <input id="pw" name="password" type="password" autocomplete="current-password" required placeholder="••••••••" />
 
-    {% if error %}
-      <div class="error">⚠️ {{ error }}</div>
-    {% endif %}
+  <button type="submit">로그인</button>
 
-    <div class="hint">© 2026 도원결의 · 桃園結義<br/>K-Startup 공공데이터 기반 정부지원사업 통합 플랫폼</div>
-  </form>
-</body>
-</html>
+  {% if error %}
+    <div class="error">⚠️ {{ error }}</div>
+  {% endif %}
+
+  <div class="hint">
+    계정이 없으신가요? <a href="{{ url_for('signup') }}">회원가입 신청</a><br/>
+    <span style="color:var(--ink-300)">가입 후 관리자 승인이 필요합니다</span>
+  </div>
+</form>
+{% endblock %}
