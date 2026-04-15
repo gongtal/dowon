@@ -35,7 +35,9 @@
           <a href="{{ url_for('logout') }}" style="color:#DC2626;font-size:11.5px;margin-left:4px">로그아웃</a>
         </div>
       {% else %}
-        <a href="{{ url_for('login') }}" class="nav-item" style="color:var(--ink-300);font-size:12px;margin-left:4px" title="관리자 로그인">⚙️</a>
+        <a href="{{ url_for('login') }}" class="admin-login-btn" title="관리자 로그인">
+          🔐 관리자 로그인
+        </a>
       {% endif %}
     </nav>
   </div>
