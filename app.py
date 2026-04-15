@@ -611,13 +611,11 @@ def ensure_cache():
 # 메인 라우트
 # ============================================================
 @app.route("/")
-@login_required
 def index():
     return render_template("index.html")
 
 
 @app.route("/api/grants")
-@login_required
 def api_grants():
     ensure_cache()
     grants = list(cache["grants"])
@@ -667,7 +665,6 @@ def api_grants():
 
 
 @app.route("/api/calendar")
-@login_required
 def api_calendar():
     ensure_cache()
     year = int(request.args.get("year", date.today().year))
@@ -699,7 +696,6 @@ def api_calendar():
 
 
 @app.route("/api/refresh", methods=["POST"])
-@login_required
 def api_refresh():
     threading.Thread(target=refresh_cache, daemon=True).start()
     return jsonify({"ok": True})
