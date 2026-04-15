@@ -71,6 +71,32 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   align-items: center;
   justify-content: space-between;
   height: 68px;
+  gap: 16px;
+}
+.top-cta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.logout-link {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-500);
+  padding: 6px 10px;
+  border-radius: 8px;
+  transition: all .15s;
+}
+.logout-link:hover { color: var(--red); background: var(--red-100); }
+.user-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 13px;
+  background: var(--ink-100);
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ink-700);
 }
 .brand {
   display: flex;
@@ -989,17 +1015,88 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
   .list-layout { grid-template-columns: 1fr; }
   .filters { position: static; }
 }
-@media (max-width: 640px) {
-  .hero-title { font-size: 30px; }
-  .kpi-grid { grid-template-columns: 1fr 1fr; margin-top: -24px; }
-  .kpi-value { font-size: 24px; }
-  .card-grid { grid-template-columns: 1fr; }
-  .cal-grid { grid-auto-rows: minmax(72px, 1fr); padding: 10px; gap: 4px; }
-  .cal-day { padding: 5px; min-height: 72px; }
-  .cal-event { font-size: 9.5px; }
-  .nav-item { padding: 8px 10px; font-size: 13px; }
+@media (max-width: 720px) {
+  .topbar .wrap {
+    height: auto;
+    min-height: 60px;
+    padding: 10px 16px;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .brand { flex: 1 1 auto; min-width: 0; }
+  .brand-mark { width: 36px; height: 36px; font-size: 19px; border-radius: 9px; }
+  .brand-kor { font-size: 17px; }
   .brand-sub { display: none; }
-  .wrap { padding: 0 16px; }
-  .modal-panel { padding: 24px; }
-  .modal-title { font-size: 20px; }
+  .top-cta { flex-shrink: 0; order: 1; margin-left: auto; }
+  .nav {
+    order: 99;
+    width: 100%;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 -16px;
+    padding: 0 16px 4px;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-item { flex-shrink: 0; padding: 8px 12px; font-size: 13px; }
+  .refresh-btn { flex-shrink: 0; }
+  .admin-login-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+    margin-left: 0;
+  }
+  .logout-link { font-size: 11.5px; padding: 5px 8px; }
+  .user-chip { font-size: 11.5px; padding: 5px 10px; }
+}
+
+@media (max-width: 640px) {
+  .hero-title { font-size: 28px; line-height: 1.3; }
+  .hero { padding: 40px 0 36px; }
+  .hero-desc { font-size: 14px; }
+  .hero-search { padding: 8px 8px 8px 14px; }
+  .hero-search input { font-size: 14px; padding: 6px 0; }
+  .hero-search button { padding: 9px 14px; font-size: 13px; }
+  .kpi-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: -20px;
+    margin-bottom: 32px;
+  }
+  .kpi-card { padding: 16px 14px; }
+  .kpi-value { font-size: 22px; }
+  .kpi-label { font-size: 12px; }
+  .kpi-sub { font-size: 11px; }
+  .card-grid { grid-template-columns: 1fr; gap: 12px; margin-bottom: 28px; }
+  .grant-card { padding: 18px; }
+  .grant-meta { gap: 8px 12px; }
+  .meta-value { font-size: 13px; }
+  .meta-value.amount { font-size: 14px; }
+  .section-head h2 { font-size: 19px; }
+  .cal-grid { grid-auto-rows: minmax(64px, 1fr); padding: 8px; gap: 3px; }
+  .cal-day { padding: 4px; min-height: 64px; }
+  .cal-day-num { font-size: 12px; }
+  .cal-event { font-size: 9px; padding: 2px 4px; }
+  .cal-event-count { font-size: 9px; padding: 1px 4px; }
+  .cal-head { gap: 12px; margin: 24px 0 18px; }
+  .cal-title { font-size: 15px; min-width: 110px; }
+  .cal-nav-btn { width: 32px; height: 32px; }
+  .cal-today-btn { padding: 0 12px; height: 32px; font-size: 12px; }
+  .page-title { font-size: 21px; }
+  .wrap { padding: 0 14px; }
+  .modal-panel { padding: 20px; max-height: 92vh; }
+  .modal-title { font-size: 19px; }
+  .modal-stats { gap: 8px; }
+  .modal-stat { padding: 12px 14px; }
+  .modal-stat-value { font-size: 17px; }
+  .filter-chips { gap: 5px; }
+  .chip { padding: 5px 9px; font-size: 11.5px; }
+}
+
+@media (max-width: 380px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .hero-title { font-size: 24px; }
+  .brand-kor { font-size: 16px; }
+  .admin-login-btn { padding: 6px 10px; font-size: 11.5px; }
 }
