@@ -24,7 +24,9 @@
       <a href="#calendar" class="nav-item" data-view="calendar">캘린더</a>
       <a href="#list" class="nav-item" data-view="list">사업 목록</a>
       {% if current_user and current_user.role == 'admin' %}
-        <a href="{{ url_for('admin') }}" class="nav-item" style="color:var(--plum)">👑 관리자</a>
+        <a href="{{ url_for('admin') }}" class="admin-login-btn" title="관리자 페이지">
+          👑 관리자 페이지
+        </a>
       {% endif %}
       <button class="refresh-btn" id="refreshBtn" title="데이터 갱신">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10"/><path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14"/></svg>
@@ -35,7 +37,7 @@
           <a href="{{ url_for('logout') }}" style="color:#DC2626;font-size:11.5px;margin-left:4px">로그아웃</a>
         </div>
       {% else %}
-        <a href="{{ url_for('login') }}" class="admin-login-btn" title="관리자 로그인">
+        <a href="{{ url_for('login', next='/admin') }}" class="admin-login-btn" title="관리자 로그인">
           🔐 관리자 로그인
         </a>
       {% endif %}
