@@ -116,6 +116,25 @@
   .footer{margin-top:60px;padding:24px 0;border-top:1px solid var(--border);
     background:#fff;color:var(--ink-500);font-size:13px}
 
+  .create-user-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px;
+    margin-bottom:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);
+    background:linear-gradient(135deg,#fff 0%,#ECFDF5 100%);border-color:#6EE7B7}
+  .create-head{margin-bottom:16px}
+  .create-kicker{font-family:'Noto Serif KR',serif;font-size:13px;font-weight:700;
+    color:var(--emerald);margin-bottom:6px;letter-spacing:.03em}
+  .create-desc{font-size:13px;color:var(--ink-500);line-height:1.5}
+  .create-form{display:grid;grid-template-columns:repeat(5,1fr) auto;gap:10px;align-items:end}
+  .create-field label{display:block;font-size:12px;font-weight:700;
+    color:var(--ink-700);margin-bottom:6px;letter-spacing:.02em}
+  .create-field input,.create-field select{width:100%;padding:10px 12px;
+    border:1.5px solid var(--border);border-radius:9px;font-family:inherit;
+    font-size:13px;background:#fff;outline:none;transition:all .15s;color:var(--ink-900)}
+  .create-field input:focus,.create-field select:focus{
+    border-color:var(--emerald);box-shadow:0 0 0 4px var(--emerald-100)}
+  .create-save-btn{padding:10px 20px;background:var(--emerald);color:#fff;border-radius:9px;
+    font-size:13px;font-weight:700;transition:background .15s;white-space:nowrap}
+  .create-save-btn:hover{background:#047857}
+
   .cta-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:24px;
     margin-bottom:24px;box-shadow:0 1px 3px rgba(15,23,42,.04);
     background:linear-gradient(135deg,#fff 0%,#FFF7ED 100%);border-color:#FDBA74}
@@ -142,6 +161,8 @@
   @media(max-width:900px){
     .kpi-grid{grid-template-columns:repeat(2,1fr)}
     .cta-form{grid-template-columns:1fr}
+    .create-form{grid-template-columns:1fr 1fr}
+    .create-save-btn{grid-column:span 2}
     .user-table{overflow-x:auto}
     table{min-width:800px}
   }
@@ -195,6 +216,41 @@
         <div class="kpi-label">거절</div>
         <div class="kpi-value">{{ counts.get('rejected', 0) }}</div>
       </div>
+    </div>
+
+    <div class="create-user-card" id="create">
+      <div class="create-head">
+        <div>
+          <div class="create-kicker">👤 회원 직접 추가</div>
+          <div class="create-desc">초대 전용 서비스입니다. 관리자가 직접 계정을 발급합니다. 생성된 계정은 자동으로 승인 상태가 됩니다.</div>
+        </div>
+      </div>
+      <form method="POST" action="{{ url_for('admin_create_user') }}" class="create-form" autocomplete="off">
+        <div class="create-field">
+          <label>이름</label>
+          <input type="text" name="name" placeholder="홍길동" required />
+        </div>
+        <div class="create-field">
+          <label>이메일</label>
+          <input type="email" name="email" placeholder="user@example.com" required />
+        </div>
+        <div class="create-field">
+          <label>소속 <span style="color:var(--ink-300);font-weight:400">(선택)</span></label>
+          <input type="text" name="company" placeholder="(주)예시" />
+        </div>
+        <div class="create-field">
+          <label>초기 비밀번호</label>
+          <input type="text" name="password" placeholder="6자 이상" minlength="6" required />
+        </div>
+        <div class="create-field">
+          <label>권한</label>
+          <select name="role">
+            <option value="user">일반회원</option>
+            <option value="admin">관리자</option>
+          </select>
+        </div>
+        <button type="submit" class="create-save-btn">계정 생성</button>
+      </form>
     </div>
 
     <div class="cta-card" id="cta">

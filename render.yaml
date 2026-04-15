@@ -9,14 +9,10 @@ services:
     envVars:
       - key: KSTARTUP_API_KEY
         value: 39af9bc6585e1db2baec17245fe6d556486148d45fe88aa213e10043604d343b
-      - key: ADMIN_EMAIL
-        value: admin@dowon.kr
-      - key: ADMIN_PASSWORD
-        value: dowon157600!
-      - key: ADMIN_NAME
-        value: 관리자
-      - key: DB_PATH
-        value: /tmp/dowon.db
+      - key: SUPABASE_URL
+        value: https://ufbfziqebhqhfmjjpnlc.supabase.co
+      - key: SUPABASE_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYmZ6aXFlYmhxaGZtampwbmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMjM3MzEsImV4cCI6MjA5MTY5OTczMX0.hUMijAlIoHC51ddEBZSLWoy4Tg1fMiDlRyG47omIVDo
       - key: SECRET_KEY
         generateValue: true
       - key: PYTHON_VERSION

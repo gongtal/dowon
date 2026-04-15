@@ -1,9 +1,8 @@
-"""도원결의 (桃園結義) — 정부지원사업 통합 플랫폼 + 회원/관리자 승인 시스템"""
+"""도원결의 (桃園結義) — 정부지원사업 통합 플랫폼 + Supabase 기반 영구 저장"""
 
 import os
 import re
 import time
-import sqlite3
 import threading
 from datetime import datetime, date, timedelta
 from functools import wraps
@@ -16,8 +15,6 @@ from flask import (
     redirect,
     url_for,
     session,
-    flash,
-    g,
     abort,
 )
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -34,95 +31,158 @@ KSTARTUP_API_KEY = os.environ.get(
     "KSTARTUP_API_KEY",
     "39af9bc6585e1db2baec17245fe6d556486148d45fe88aa213e10043604d343b",
 )
-DB_PATH = os.environ.get("DB_PATH", "dowon.db")
-ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "admin@dowon.kr")
-ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "dowon157600!")
-ADMIN_NAME = os.environ.get("ADMIN_NAME", "관리자")
+SUPABASE_URL = os.environ.get(
+    "SUPABASE_URL",
+    "https://ufbfziqebhqhfmjjpnlc.supabase.co",
+)
+SUPABASE_KEY = os.environ.get(
+    "SUPABASE_KEY",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmYmZ6aXFlYmhxaGZtampwbmxjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxMjM3MzEsImV4cCI6MjA5MTY5OTczMX0.hUMijAlIoHC51ddEBZSLWoy4Tg1fMiDlRyG47omIVDo",
+)
 
 KSTARTUP_URL = (
     "https://nidapi.k-startup.go.kr/api/kisedKstartupService/v1/getAnnouncementInformation"
 )
+
+DEFAULT_CTA_LABEL = "무상지원금 1억 받기 로드맵 무료 세미나 신청하기"
+DEFAULT_CTA_URL = "https://example.com"
 
 CACHE_TTL = 1800
 cache = {"grants": [], "updated": 0, "loading": False}
 
 
 # ============================================================
-# DB
+# Supabase REST 헬퍼
 # ============================================================
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(DB_PATH)
-        g.db.row_factory = sqlite3.Row
-        g.db.execute("PRAGMA foreign_keys = ON")
-    return g.db
+def _sb_headers(prefer=None):
+    h = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+    }
+    if prefer:
+        h["Prefer"] = prefer
+    return h
 
 
-@app.teardown_appcontext
-def close_db(_):
-    db = g.pop("db", None)
-    if db:
-        db.close()
-
-
-DEFAULT_CTA_LABEL = "무상지원금 1억 받기 로드맵 무료 세미나 신청하기"
-DEFAULT_CTA_URL = "https://example.com"
-
-
-def init_db():
-    """DB 스키마 생성 + 기본 관리자/설정 보정."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            name TEXT NOT NULL,
-            company TEXT,
-            password_hash TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'user',
-            status TEXT NOT NULL DEFAULT 'pending',
-            reason TEXT,
-            created_at TEXT NOT NULL,
-            approved_at TEXT,
-            approved_by INTEGER
-        )
-        """
+def sb_get(table, params=None):
+    r = requests.get(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        params=params or {},
+        headers=_sb_headers(),
+        timeout=15,
     )
-    conn.execute(
-        """
-        CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-        """
+    r.raise_for_status()
+    return r.json()
+
+
+def sb_insert(table, data, prefer="return=representation"):
+    r = requests.post(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        json=data,
+        headers=_sb_headers(prefer=prefer),
+        timeout=15,
     )
-    now = datetime.utcnow().isoformat()
-    for k, v in (("cta_url", DEFAULT_CTA_URL), ("cta_label", DEFAULT_CTA_LABEL)):
-        conn.execute(
-            "INSERT OR IGNORE INTO settings (key, value, updated_at) VALUES (?, ?, ?)",
-            (k, v, now),
-        )
-    conn.commit()
+    r.raise_for_status()
+    return r.json()
 
-    cur = conn.execute("SELECT id FROM users WHERE email = ?", (ADMIN_EMAIL,))
-    if not cur.fetchone():
-        conn.execute(
-            """INSERT INTO users (email, name, password_hash, role, status, created_at, approved_at)
-               VALUES (?, ?, ?, 'admin', 'approved', ?, ?)""",
-            (
-                ADMIN_EMAIL,
-                ADMIN_NAME,
-                generate_password_hash(ADMIN_PASSWORD),
-                datetime.utcnow().isoformat(),
-                datetime.utcnow().isoformat(),
-            ),
-        )
-        conn.commit()
-        print(f"[INFO] 기본 관리자 계정 생성: {ADMIN_EMAIL}")
 
-    conn.close()
+def sb_update(table, params, data, prefer="return=representation"):
+    r = requests.patch(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        params=params,
+        json=data,
+        headers=_sb_headers(prefer=prefer),
+        timeout=15,
+    )
+    r.raise_for_status()
+    return r.json()
+
+
+def sb_delete(table, params):
+    r = requests.delete(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        params=params,
+        headers=_sb_headers(),
+        timeout=15,
+    )
+    r.raise_for_status()
+    return True
+
+
+def sb_upsert(table, data, on_conflict):
+    r = requests.post(
+        f"{SUPABASE_URL}/rest/v1/{table}",
+        params={"on_conflict": on_conflict},
+        json=data,
+        headers=_sb_headers(prefer="resolution=merge-duplicates,return=representation"),
+        timeout=15,
+    )
+    r.raise_for_status()
+    return r.json()
+
+
+# ============================================================
+# DB 조회 함수 (Supabase 기반)
+# ============================================================
+def db_get_user_by_email(email):
+    rows = sb_get("users", {"email": f"eq.{email}", "limit": 1})
+    return rows[0] if rows else None
+
+
+def db_get_user_by_id(uid):
+    rows = sb_get("users", {"id": f"eq.{uid}", "limit": 1})
+    return rows[0] if rows else None
+
+
+def db_create_user(email, name, company, password_hash, reason):
+    data = {
+        "email": email,
+        "name": name,
+        "company": company or None,
+        "password_hash": password_hash,
+        "role": "user",
+        "status": "pending",
+        "reason": reason or None,
+    }
+    result = sb_insert("users", data)
+    return result[0] if result else None
+
+
+def db_update_user(uid, **fields):
+    sb_update("users", {"id": f"eq.{uid}"}, fields)
+
+
+def db_delete_user(uid):
+    sb_delete("users", {"id": f"eq.{uid}"})
+
+
+def db_list_users(status=None):
+    params = {"order": "created_at.desc"}
+    if status:
+        params["status"] = f"eq.{status}"
+    return sb_get("users", params)
+
+
+def db_count_users_by_status():
+    rows = sb_get("users", {"select": "status"})
+    counts = {}
+    for r in rows:
+        counts[r["status"]] = counts.get(r["status"], 0) + 1
+    return counts
+
+
+def db_get_setting(key, default=""):
+    rows = sb_get("settings", {"key": f"eq.{key}", "limit": 1})
+    return rows[0]["value"] if rows else default
+
+
+def db_set_setting(key, value):
+    sb_upsert(
+        "settings",
+        {"key": key, "value": value, "updated_at": datetime.utcnow().isoformat()},
+        on_conflict="key",
+    )
 
 
 # ============================================================
@@ -132,8 +192,11 @@ def current_user():
     uid = session.get("uid")
     if not uid:
         return None
-    row = get_db().execute("SELECT * FROM users WHERE id = ?", (uid,)).fetchone()
-    return dict(row) if row else None
+    try:
+        return db_get_user_by_id(uid)
+    except Exception as e:
+        print(f"[ERROR] current_user: {e}")
+        return None
 
 
 def login_required(view):
@@ -162,27 +225,17 @@ def admin_required(view):
     return wrapped
 
 
-def get_setting(key, default=""):
-    row = get_db().execute("SELECT value FROM settings WHERE key = ?", (key,)).fetchone()
-    return row["value"] if row else default
-
-
-def set_setting(key, value):
-    db = get_db()
-    db.execute(
-        """INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
-           ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at""",
-        (key, value, datetime.utcnow().isoformat()),
-    )
-    db.commit()
-
-
 @app.context_processor
 def inject_user():
+    try:
+        cta_url = db_get_setting("cta_url", DEFAULT_CTA_URL)
+        cta_label = db_get_setting("cta_label", DEFAULT_CTA_LABEL)
+    except Exception:
+        cta_url, cta_label = DEFAULT_CTA_URL, DEFAULT_CTA_LABEL
     return {
         "current_user": current_user(),
-        "cta_url": get_setting("cta_url", DEFAULT_CTA_URL),
-        "cta_label": get_setting("cta_label", DEFAULT_CTA_LABEL),
+        "cta_url": cta_url,
+        "cta_label": cta_label,
     }
 
 
@@ -198,13 +251,17 @@ def login():
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
         password = request.form.get("password") or ""
-        row = get_db().execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        if not row or not check_password_hash(row["password_hash"], password):
+        try:
+            user = db_get_user_by_email(email)
+        except Exception as e:
+            print(f"[ERROR] login: {e}")
+            user = None
+        if not user or not check_password_hash(user["password_hash"], password):
             error = "이메일 또는 비밀번호가 올바르지 않습니다."
         else:
             session.permanent = True
-            session["uid"] = row["id"]
-            if row["status"] != "approved":
+            session["uid"] = user["id"]
+            if user["status"] != "approved":
                 return redirect(url_for("pending"))
             nxt = request.args.get("next") or "/"
             if not nxt.startswith("/"):
@@ -213,53 +270,9 @@ def login():
     return render_template("login.html", error=error)
 
 
-@app.route("/signup", methods=["GET", "POST"])
+@app.route("/signup")
 def signup():
-    if current_user():
-        return redirect(url_for("index"))
-
-    error = None
-    form = {"email": "", "name": "", "company": "", "reason": ""}
-    if request.method == "POST":
-        form["email"] = (request.form.get("email") or "").strip().lower()
-        form["name"] = (request.form.get("name") or "").strip()
-        form["company"] = (request.form.get("company") or "").strip()
-        form["reason"] = (request.form.get("reason") or "").strip()
-        password = request.form.get("password") or ""
-        password2 = request.form.get("password2") or ""
-
-        if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", form["email"]):
-            error = "올바른 이메일 주소를 입력해주세요."
-        elif len(password) < 6:
-            error = "비밀번호는 6자 이상이어야 합니다."
-        elif password != password2:
-            error = "비밀번호가 일치하지 않습니다."
-        elif not form["name"]:
-            error = "이름을 입력해주세요."
-        else:
-            db = get_db()
-            exists = db.execute("SELECT id FROM users WHERE email = ?", (form["email"],)).fetchone()
-            if exists:
-                error = "이미 가입된 이메일입니다."
-            else:
-                db.execute(
-                    """INSERT INTO users (email, name, company, password_hash, role, status, reason, created_at)
-                       VALUES (?, ?, ?, ?, 'user', 'pending', ?, ?)""",
-                    (
-                        form["email"],
-                        form["name"],
-                        form["company"],
-                        generate_password_hash(password),
-                        form["reason"],
-                        datetime.utcnow().isoformat(),
-                    ),
-                )
-                db.commit()
-                new_id = db.execute("SELECT id FROM users WHERE email = ?", (form["email"],)).fetchone()["id"]
-                session.permanent = True
-                session["uid"] = new_id
-                return redirect(url_for("pending"))
-    return render_template("signup.html", error=error, form=form)
+    return redirect(url_for("login"))
 
 
 @app.route("/pending")
@@ -279,7 +292,7 @@ def logout():
 
 
 # ============================================================
-# 관리자 페이지
+# 관리자
 # ============================================================
 @app.route("/admin")
 @admin_required
@@ -289,31 +302,85 @@ def admin():
         tab = "pending"
 
     if tab == "all":
-        rows = get_db().execute("SELECT * FROM users ORDER BY created_at DESC").fetchall()
+        users = db_list_users()
     else:
-        rows = (
-            get_db()
-            .execute(
-                "SELECT * FROM users WHERE status = ? ORDER BY created_at DESC",
-                (tab,),
-            )
-            .fetchall()
-        )
-    counts = {
-        r["status"]: r["n"]
-        for r in get_db().execute(
-            "SELECT status, COUNT(*) AS n FROM users GROUP BY status"
-        )
-    }
+        users = db_list_users(status=tab)
+    counts = db_count_users_by_status()
+
     return render_template(
         "admin.html",
-        users=[dict(r) for r in rows],
+        users=users,
         tab=tab,
         counts=counts,
         total=sum(counts.values()),
-        cta_url_current=get_setting("cta_url", DEFAULT_CTA_URL),
-        cta_label_current=get_setting("cta_label", DEFAULT_CTA_LABEL),
+        cta_url_current=db_get_setting("cta_url", DEFAULT_CTA_URL),
+        cta_label_current=db_get_setting("cta_label", DEFAULT_CTA_LABEL),
     )
+
+
+@app.route("/admin/action", methods=["POST"])
+@admin_required
+def admin_action():
+    uid = request.form.get("uid", type=int)
+    action = request.form.get("action")
+    me = current_user()
+    if not uid or action not in (
+        "approve", "reject", "delete", "make_admin", "make_user",
+    ):
+        abort(400)
+    if uid == me["id"] and action in ("delete", "make_user"):
+        return redirect(url_for("admin", tab=request.form.get("tab", "pending")))
+
+    if action == "approve":
+        db_update_user(uid, status="approved", approved_at=datetime.utcnow().isoformat(), approved_by=me["id"])
+    elif action == "reject":
+        db_update_user(uid, status="rejected")
+    elif action == "delete":
+        db_delete_user(uid)
+    elif action == "make_admin":
+        db_update_user(uid, role="admin")
+    elif action == "make_user":
+        db_update_user(uid, role="user")
+    return redirect(url_for("admin", tab=request.form.get("tab", "pending")))
+
+
+@app.route("/admin/create_user", methods=["POST"])
+@admin_required
+def admin_create_user():
+    email = (request.form.get("email") or "").strip().lower()
+    name = (request.form.get("name") or "").strip()
+    company = (request.form.get("company") or "").strip()
+    password = request.form.get("password") or ""
+    role = request.form.get("role") or "user"
+
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        return redirect(url_for("admin", tab="approved") + "?err=email")
+    if len(password) < 6:
+        return redirect(url_for("admin", tab="approved") + "?err=pw")
+    if not name:
+        return redirect(url_for("admin", tab="approved") + "?err=name")
+    if role not in ("user", "admin"):
+        role = "user"
+
+    try:
+        if db_get_user_by_email(email):
+            return redirect(url_for("admin", tab="approved") + "?err=exists")
+    except Exception:
+        pass
+
+    me = current_user()
+    data = {
+        "email": email,
+        "name": name,
+        "company": company or None,
+        "password_hash": generate_password_hash(password),
+        "role": role,
+        "status": "approved",
+        "approved_at": datetime.utcnow().isoformat(),
+        "approved_by": me["id"] if me else None,
+    }
+    sb_insert("users", data)
+    return redirect(url_for("admin", tab="approved"))
 
 
 @app.route("/admin/cta", methods=["POST"])
@@ -324,40 +391,10 @@ def admin_cta():
     if url and not re.match(r"^https?://", url):
         url = "https://" + url
     if url:
-        set_setting("cta_url", url)
+        db_set_setting("cta_url", url)
     if label:
-        set_setting("cta_label", label)
+        db_set_setting("cta_label", label)
     return redirect(url_for("admin", tab=request.form.get("tab", "pending")) + "#cta")
-
-
-@app.route("/admin/action", methods=["POST"])
-@admin_required
-def admin_action():
-    uid = request.form.get("uid", type=int)
-    action = request.form.get("action")
-    me = current_user()
-    if not uid or action not in ("approve", "reject", "delete", "make_admin", "make_user"):
-        abort(400)
-    if uid == me["id"] and action in ("delete", "make_user"):
-        flash("본인 계정은 해당 작업을 할 수 없습니다.", "error")
-        return redirect(url_for("admin", tab=request.form.get("tab", "pending")))
-
-    db = get_db()
-    if action == "approve":
-        db.execute(
-            "UPDATE users SET status='approved', approved_at=?, approved_by=? WHERE id=?",
-            (datetime.utcnow().isoformat(), me["id"], uid),
-        )
-    elif action == "reject":
-        db.execute("UPDATE users SET status='rejected' WHERE id=?", (uid,))
-    elif action == "delete":
-        db.execute("DELETE FROM users WHERE id=?", (uid,))
-    elif action == "make_admin":
-        db.execute("UPDATE users SET role='admin' WHERE id=?", (uid,))
-    elif action == "make_user":
-        db.execute("UPDATE users SET role='user' WHERE id=?", (uid,))
-    db.commit()
-    return redirect(url_for("admin", tab=request.form.get("tab", "pending")))
 
 
 # ============================================================
@@ -668,16 +705,19 @@ def api_refresh():
     return jsonify({"ok": True})
 
 
+@app.route("/health")
+def health():
+    return jsonify({"ok": True, "supabase": bool(SUPABASE_URL)})
+
+
 # ============================================================
-# 실행
+# 시작
 # ============================================================
-init_db()
 threading.Thread(target=refresh_cache, daemon=True).start()
 
 
 if __name__ == "__main__":
-    print("\n=== 도원결의 (桃園結義) ===")
-    print(f"DB: {DB_PATH}")
-    print(f"관리자: {ADMIN_EMAIL}")
+    print("\n=== 도원결의 (桃園結義) — Supabase 기반 ===")
+    print(f"Supabase: {SUPABASE_URL}")
     print("http://127.0.0.1:5055\n")
     app.run(host="127.0.0.1", port=5055, debug=False)
